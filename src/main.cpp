@@ -2,15 +2,19 @@
 #define FLOWMETER_PIN 13 // As marked on board
 
 long previousMillis;
-int interval = 1000; // milliseconds
+unsigned int interval = 5000; // milliseconds
 float calibrationFactor = 4.5;
-volatile byte pulseCount;
-byte pulse1Sec;
+unsigned int pulseCount;
+unsigned int pulsesAtInverval;
 float flowRate;
 
 void IRAM_ATTR pulseCounter()
 {
   pulseCount++;
+  if (pulseCount == 0)
+  {
+    Serial.println("pulseCount reset to 0 due to overflow. Make sure you are using the correct data type.");
+  }
 }
 
 void setup()
@@ -26,7 +30,7 @@ void loop()
   {
     Serial.print("pulseCount: \t");
     Serial.println(pulseCount);
-    pulse1Sec = pulseCount;
+    pulsesAtInverval = pulseCount;
     pulseCount = 0;
 
     // Because this loop may not complete in exactly 1 second intervals we calculate
@@ -34,7 +38,7 @@ void loop()
     // that to scale the output. We also apply the calibrationFactor to scale the output
     // based on the number of pulses per second per units of measure (litres/minute in
     // this case) coming from the sensor.
-    flowRate = ((1000.0 / (millis() - previousMillis)) * pulse1Sec) / calibrationFactor;
+    flowRate = ((1000.0 / (millis() - previousMillis)) * pulsesAtInverval) / calibrationFactor;
     previousMillis = millis();
 
     Serial.print("Flow rate: ");
